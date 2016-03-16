@@ -1,16 +1,16 @@
 {
-  "name": "hubot-grafana",
+  "name": "hubot-grafana-slack",
   "description": "Query Grafana dashboards",
-  "version": "1.4.9",
+  "version": "1.5.0",
   "author": "Stephen Yeargin <stephen@yearg.in>",
   "license": "MIT",
   "keywords": "hubot, hubot-scripts, grafana, graphs",
   "repository": {
     "type": "git",
-    "url": "git://github.com/stephenyeargin/hubot-grafana.git"
+    "url": "git://github.com/fuzzyorange/hubot-grafana-slack.git"
   },
   "bugs": {
-    "url": "https://github.com/stephenyeargin/hubot-grafana/issues"
+    "url": "https://github.com/fuzzyorange/hubot-grafana-slack/issues"
   },
   "dependencies": {
     "knox": "^0.9.2",
