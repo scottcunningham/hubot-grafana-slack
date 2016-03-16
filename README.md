@@ -101,6 +101,15 @@ export HUBOT_GRAFANA_S3_SECRET_ACCESS_KEY=aBcD01234dEaDbEef01234
 export HUBOT_GRAFANA_S3_PREFIX=graphs
 ```
 
+### Slack image uploading
+
+As an alternative to uploading images to S3, if using Slack you can have the script upload the images as file attachments instead.
+
+| Configuration Variable           | Required | Description                    |
+| -------------------------------- | -------- | ------------------------------ |
+| `HUBOT_GRAFANA_SLACK_TOKEN`      | **Yes**  | Slack API Token, usually used to allow bot access |
+| `HUBOT_GRAFANA_SLACK_API`        | No       | Slack API URL, defaults to 'http://slack.com/api' |
+
 ## Sample Interaction
 
 ```
