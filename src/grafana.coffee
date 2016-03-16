@@ -20,6 +20,8 @@
 #   HUBOT_GRAFANA_S3_SECRET_ACCESS_KEY - Optional; Secret access key for S3
 #   HUBOT_GRAFANA_S3_PREFIX - Optional; Bucket prefix (useful for shared buckets)
 #   HUBOT_GRAFANA_S3_REGION - Optional; Bucket region (defaults to us-standard)
+#   HUBOT_GRAFANA_SLACK_TOKEN - Optional; Slack API Token for slack uploads.
+#   HUBOT_GRAFANA_SLACK_API - Optional; URL to the Slack API, defaults to the main Slack API.
 #
 # Dependencies:
 #   "knox": "^0.9.2"
@@ -30,6 +32,8 @@
 #   hubot graf list <tag> - Lists all dashboards available (optional: <tag>)
 #   hubot graf search <keyword> - Search available dashboards by <keyword>
 #
+
+querystring = require 'querystring';
 
 crypto  = require 'crypto'
 knox    = require 'knox'
@@ -48,6 +52,8 @@ module.exports = (robot) ->
   s3_style = process.env.HUBOT_GRAFANA_S3_STYLE if process.env.HUBOT_GRAFANA_S3_STYLE
   s3_region = process.env.HUBOT_GRAFANA_S3_REGION or 'us-standard'
   s3_port = process.env.HUBOT_GRAFANA_S3_PORT if process.env.HUBOT_GRAFANA_S3_PORT
+  slack_token = process.env.HUBOT_GRAFANA_SLACK_TOKEN
+  slack_url = process.env.HUBOT_GRAFANA_SLACK_API or 'https://slack.com/api'
 
   # Get a specific dashboard with options
   robot.respond /(?:grafana|graph|graf) (?:dash|dashboard|db) ([A-Za-z0-9\-\:_]+)(.*)?/i, (msg) ->
@@ -160,7 +166,7 @@ module.exports = (robot) ->
           link = "#{grafana_host}/dashboard/db/#{slug}/?panelId=#{panel.id}&fullscreen&from=#{timespan.from}&to=#{timespan.to}#{variables}"
 
           # Fork here for S3-based upload and non-S3
-          if (s3_bucket && s3_access_key && s3_secret_key)
+          if ((s3_bucket && s3_access_key && s3_secret_key) || slack_token)
             fetchAndUpload msg, title, imageUrl, link
           else
             sendRobotResponse msg, title, imageUrl, link
@@ -266,7 +272,34 @@ module.exports = (robot) ->
 
     request url, requestHeaders, (err, res, body) ->
       robot.logger.debug "Uploading file: #{body.length} bytes, content-type[#{res.headers['content-type']}]"
-      uploadToS3(msg, title, link, body, body.length, res.headers['content-type'])
+      if (s3_bucket && s3_access_key && s3_secret_key)
+        uploadToS3(msg, title, link, body, body.length, res.headers['content-type'])
+      else
+        uploadToSlack(msg, title, link, body, body.length, res.headers['content-type'])
+
+  # Upload image to Slack
+  uploadToSlack = (msg, title, link, content, length, content_type) ->
+    name = msg.match[1].replace ':', '.'
+    filename = "grafana-#{name}.png"
+
+    uri = slack_url + '/files.upload?'
+    uri += querystring.stringify
+      token: slack_token
+      filename: filename
+      filetype: "auto"
+      title: title
+      channels: '#' + msg.message.room
+
+    req = request.post uri, (err, res, body) ->
+      if (err)
+        return robot.logger.error err
+      robot.logger.debug "Uploaded file to Slack"
+
+    form = req.form()
+    form.append 'file', content, {
+        filename: filename
+        contentType: content_type
+      }
 
   # Upload image to S3
   uploadToS3 = (msg, title, link, content, length, content_type) ->
