@@ -288,7 +288,7 @@ module.exports = (robot) ->
       filename: filename
       filetype: "auto"
       title: title
-      channels: '#' + msg.message.room
+      channels: msg.message.room
 
     req = request.post uri, (err, res, body) ->
       if (err)
